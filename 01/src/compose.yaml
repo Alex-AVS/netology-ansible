@@ -1,0 +1,14 @@
+version: "3"
+services:
+  centos7:
+    container_name: 'centos7'
+    stdin_open: true
+    tty: true
+    image: centos:centos7.9.2009
+    command: top
+  ubuntu:
+    container_name: 'ubuntu'
+    stdin_open: true
+    tty: true
+    image: ubuntu:22.04
+    command: top
