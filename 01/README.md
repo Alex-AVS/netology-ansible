@@ -14,11 +14,11 @@
 
 Изменилось.
 
-3. Создаём [compose-file](src/compose.yaml) и запускаем два контейнера с CentOS7 и Ubuntu 22.04,
+3. Создаём [compose-file](src/compose.yaml) и запускаем два контейнера с CentOS7 и Ubuntu 22.04 c , предварительно установленным python
 
 ![tf](img/01-01-docker_env_up.png)
 
-4. Выполняем playbook с окружением prod, предварительно установив в Ubuntu python:
+4. Выполняем playbook с окружением prod:
 
 ![tf](img/01-01-play-3.png)
 
@@ -65,4 +65,35 @@
 ![tf](img/01-01-play-6.png)
 
 ## Задание 2
-1. 
+1. Расшифровываем файлы:
+
+![tf](img/01-02-vault-decrypt.png)
+
+2. Шифруем строку:
+
+![tf](img/01-02-vault-sring-encrypt.png)
+
+3. Выполняем:
+
+![tf](img/01-02-play-1.png)
+
+4. Добавляем в окружение контейнер с fedora:
+```yaml
+fedora:
+    container_name: 'fedora'
+    stdin_open: true
+    tty: true
+    image: pycontribs/fedora:latest
+    command: bash
+```
+Запускаем:
+
+![tf](img/01-02-docker-up.png)
+
+Добавляем группу хостов fed и переменную some_fact. Выполняем playbook:
+
+![tf](img/01-02-play-2.png)
+
+5. Создаём [скрипт](src/run.sh) для запуска и выполняем:
+
+![tf](img/01-02-run-sh.png)

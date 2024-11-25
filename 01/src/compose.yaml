@@ -7,8 +7,18 @@ services:
     image: centos:centos7.9.2009
     command: top
   ubuntu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      tags:
+        - ubuntu-python
     container_name: 'ubuntu'
     stdin_open: true
     tty: true
-    image: ubuntu:22.04
-    command: top
+    command: bash
+  fedora:
+    container_name: 'fedora'
+    stdin_open: true
+    tty: true
+    image: pycontribs/fedora:latest
+    command: bash
