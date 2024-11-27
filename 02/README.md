@@ -42,3 +42,4 @@
 Проверка:
 
 ![tf](img/02-01-working_click.png)
+ 
