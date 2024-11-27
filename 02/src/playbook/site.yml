@@ -1,0 +1,95 @@
+---
+- name: Install Clickhouse
+  hosts: clickhouse
+  handlers:
+    - name: Start clickhouse service
+      become: true
+      ansible.builtin.service:
+        name: clickhouse-server
+        state: restarted
+  tasks:
+    - name: Get clickhouse distrib
+      block:
+        - name: Get clickhouse distrib
+          ansible.builtin.get_url:
+            url: "https://packages.clickhouse.com/rpm/stable/{{ item }}-{{ clickhouse_version }}.noarch.rpm"
+            dest: "./{{ item }}-{{ clickhouse_version }}.rpm"
+            mode: '644'
+          with_items: "{{ clickhouse_packages }}"
+      rescue:
+        - name: Get clickhouse distrib
+          ansible.builtin.get_url:
+            url: "https://packages.clickhouse.com/rpm/stable/clickhouse-common-static-{{ clickhouse_version }}.x86_64.rpm"
+            dest: "./clickhouse-common-static-{{ clickhouse_version }}.rpm"
+            mode: '644'
+    - name: Install clickhouse packages
+      become: true
+      ansible.builtin.yum:
+        name:
+          - clickhouse-common-static-{{ clickhouse_version }}.rpm
+          - clickhouse-client-{{ clickhouse_version }}.rpm
+          - clickhouse-server-{{ clickhouse_version }}.rpm
+        disable_gpg_check: true
+      notify: Start clickhouse service
+    - name: Flush handlers
+      ansible.builtin.meta: flush_handlers
+    - name: Create database
+      ansible.builtin.command: "clickhouse-client -q 'create database logs;'"
+      register: create_db
+      failed_when: create_db.rc != 0 and create_db.rc != 82
+      changed_when: create_db.rc == 0
+
+- name: Install Vector
+  hosts: clickhouse
+  handlers:
+    - name: Restart Vector service
+      become: true
+      ansible.builtin.service:
+        name: vector
+        state: restarted
+  tasks:
+    - name: Check that the repo exists
+      ansible.builtin.stat:
+        path: /etc/yum.repos.d/vector.repo
+        get_checksum: false
+        get_attributes: false
+      register: stat_result
+    - name: Download Vector repo
+      when: stat_result.stat.exists == false
+      ansible.builtin.get_url:
+        url: "{{ vector_curl }}"
+        dest: ./vector.sh
+        mode: '755'
+    - name: Install Vector repo
+      when: stat_result.stat.exists == false
+      become: true
+      ansible.builtin.command:
+        cmd: "bash -c ./vector.sh"
+        creates: /etc/yum.repos.d/vector.repo
+    - name: Install Vector
+      become: true
+      ansible.builtin.dnf:
+        name: vector >= {{ vector_version }}
+        state: present
+    - name: Configure vector sync
+      when: vector_configure_click_sink == true
+      block:
+        - name: Check Clickhose table
+          ansible.builtin.command: "clickhouse-client -q 'show tables from logs like '\"'\"'%{{ vector_click_table }}%'\"'\"''"
+          register: check_table
+          failed_when: check_table.rc != 0
+          changed_when: false
+        - name: Configure Clickhose table
+          when: check_table.stdout != vector_click_table
+          ansible.builtin.command: "clickhouse-client -q 'create table if not exists {{ vector_click_db }}.{{ vector_click_table }} {{ vector_table_sql }};'"
+          register: create_table
+          failed_when: create_table.rc != 0 and create_table.rc != 82
+          changed_when: create_table.rc == 0
+
+    - name: Configure Vector
+      become: true
+      ansible.builtin.template:
+        src: templates/vector.yaml
+        dest: /etc/vector/vector.yaml
+        mode: '644'
+      notify: Restart Vector service
