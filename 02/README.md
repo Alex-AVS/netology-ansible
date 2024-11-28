@@ -5,7 +5,7 @@
 
 Переменные:
 - clickhouse_version - версия ClickHouse, которую необходимо установить
-  clickhouse_packages - список пакетов ClickHouse для установки
+- clickhouse_packages - список пакетов ClickHouse для установки
 - vector_version - версия Vektor, которую необходимо установить
 - vector_curl - Адрес для скачивания скрипта установки репозитория Vector
 - vector_configure_click_sink - Флаг конфигурирования тестового sink. Если true, создаёт в ClickHouse таблицу и 

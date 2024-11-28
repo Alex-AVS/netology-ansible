@@ -1,0 +1,15 @@
+---
+clickhouse:
+  hosts:
+    clickhouse-01:
+      ansible_host: "{{tf_clickhouse_ip}}"
+
+vector:
+  hosts:
+    vector-01:
+      ansible_host: "{{tf_vector_ip}}"
+
+lighthouse:
+  hosts:
+    lighthouse-01:
+      ansible_host: "{{tf_lighthouse_ip}}"

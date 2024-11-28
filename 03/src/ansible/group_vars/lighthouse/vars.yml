@@ -1,0 +1,4 @@
+---
+lighthouse_url: "https://github.com/VKCOM/lighthouse.git"
+lighthouse_dst_dir: "/opt/lighthouse"
+
