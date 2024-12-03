@@ -1,0 +1,5 @@
+---
+#host addresses from terraform
+tf_clickhouse_ip: 89.169.146.242
+tf_vector_ip    : 89.169.142.149
+tf_lighthouse_ip: 89.169.156.140

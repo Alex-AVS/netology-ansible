@@ -1,0 +1,7 @@
+---
+clickhouse_version: "22.3.3.44"
+vector_configure_click_sink: true
+vector_click_table: "vector"
+vector_table_sql: "(appname String, facility String, hostname String, message String, msgid String, procid UInt64, 
+  severity String, timestamp DateTime64, version UInt64) Engine= MergeTree PARTITION BY toYYYYMMDD(timestamp) ORDER BY timestamp"
+vector_click_db: "logs"

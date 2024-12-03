@@ -1,0 +1,64 @@
+---
+- name: Install Clickhouse
+  hosts: clickhouse
+  roles:
+    - role: ansible-clickhouse
+      vars:
+        clickhouse_listen_host:
+          - "::"
+        clickhouse_dbs_custom:
+          - name: "{{ vector_click_db }}"
+        clickhouse_networks_default:
+          - "0.0.0.0/0"
+
+  tasks:
+    - name: Configure vector table
+      when: vector_configure_click_sink == true
+      block:
+        - name: Check Clickhouse table
+          ansible.builtin.command: "clickhouse-client -h 127.0.0.1 -q 'show tables from logs like '\"'\"'%{{ vector_click_table }}%'\"'\"''"
+          register: check_table
+          failed_when: check_table.rc != 0
+          changed_when: false
+        - name: Configure Clickhouse table
+          when: check_table.stdout != vector_click_table
+          ansible.builtin.command: "clickhouse-client -h 127.0.0.1 -q 'create table if not exists {{ vector_click_db }}.{{ vector_click_table }} {{ vector_table_sql }};'"
+          register: create_table
+          failed_when: create_table.rc != 0 and create_table.rc != 82
+          changed_when: create_table.rc == 0
+
+- name: Install Vector
+  hosts: vector
+  roles:
+    - vector-role
+
+- name: Install Lighthouse
+  hosts: lighthouse
+  pre_tasks:
+    - name: Install Git (redhat)
+      when: ansible_os_family | lower == "redhat"
+      become: true
+      ansible.builtin.dnf:
+        name: git
+        state: present
+    - name: Install Git (debian)
+      when: ansible_os_family | lower == "debian"
+      become: true
+      ansible.builtin.apt:
+        name: git
+        state: present
+        update_cache: true
+  roles:
+    - lighthouse-role
+    - role: geerlingguy.nginx
+      become: yes
+      vars:
+        - nginx_remove_default_vhost: true
+        - nginx_vhosts:
+            - listen: "80 default_server"
+              server_name: "_"
+              root: "{{ lighthouse_dst_dir }}"
+              index: "index.html"
+              file: "lighthouse.conf"
+
+
